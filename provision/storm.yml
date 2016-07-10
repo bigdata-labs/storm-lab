@@ -1,0 +1,58 @@
+---
+- hosts: storm
+  sudo: yes
+  vars:
+    - version: preview
+    - user: cloud
+    - group: users
+    ##python -c 'import crypt; print crypt.crypt("cloud", "$1$SomeSalt$")'
+    - password: $1$SomeSalt$15avH4qSlfRSEvC0bIn2./
+
+  tasks:
+    - include: tasks/create-swap-space.yml
+    - include: tasks/common.yml
+    - include: tasks/jdk8.yml
+
+    - name: copy storm
+      copy: src="./files/storm/apache-storm-1.0.1.tar.gz" dest="/tmp" owner={{ user }} group={{ group }}
+    - name: unarchive storm
+      unarchive: src="/tmp/apache-storm-1.0.1.tar.gz" dest="/usr/local/" owner={{ user }} group={{ group }} copy=no
+    - file: src="/usr/local/apache-storm-1.0.1" dest="/usr/local/storm" owner={{ user }} group={{ group }} state=link
+    - lineinfile: dest='/etc/profile' line='export STORM_HOME=/usr/local/storm' state=present
+    - lineinfile: dest='/etc/profile' line='export PATH="$PATH:$STORM_HOME/bin"' state=present
+
+    - name: copy conf
+      copy: src="./files/storm/conf/"  dest="/usr/local/storm/conf/" force=yes mode=0755  owner={{ user }} group={{ group }}
+
+    - name: mkdir storm nimbus work dir
+      file: path=/usr/local/storm/wkdir state=directory mode=0755  owner={{ user }} group={{ group }}
+
+    - name: mkdir logs
+      file: path=/usr/local/storm/logs state=directory mode=0755  owner={{ user }} group={{ group }}
+
+    - name: init nimbus if is storm nimbus
+      copy: src="./files/storm/nimbus/" dest="/etc/supervisor/conf.d/" mode=0755  owner={{ user }} group={{ group }}
+      when: isNimbus == 'true'
+
+    - name: init supervisor if is storm supervisor
+      copy: src="./files/storm/supervisor/" dest="/etc/supervisor/conf.d/" mode=0755  owner={{ user }} group={{ group }}
+      when: isNimbus == 'false'
+
+    - name: start nimbus
+      shell: "sudo su - {{user}}  -c '/usr/local/storm/bin/storm ui &'"
+      when: isNimbus == 'true'
+    - shell: "sudo su - {{user}}  -c '/usr/local/storm/bin/storm nimbus &'"
+      when: isNimbus == 'true'
+
+    - name: start supervisor
+      shell: "sudo su - {{user}}  -c '/usr/local/storm/bin/storm logviewer &'"
+      when: isNimbus == 'false'
+    - shell: "sudo su - {{user}}  -c '/usr/local/storm/bin/storm supervisor &'"  
+      when: isNimbus == 'false'
+
+    # - file: "/var/log/supervisor/"
+    # - shell: "sudo su - {{user}}  -c 'supervisor start &'"    
+
+    # - name: start supervisor service
+    #   service: name=supervisor state=started 
+  
