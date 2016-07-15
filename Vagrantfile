@@ -27,29 +27,29 @@ Vagrant.configure(2) do |config|
   end
 
 
-  # (1..zookeeper_node_count).each do |machine_id|
-  #   config.vm.define "zookeeper#{machine_id}" do |machine|
-  #     machine.vm.box = machine_box
-  #     machine.vm.box_url = machine_box_url
-  #     machine.vm.hostname = "zookeeper#{machine_id}"
-  #     machine.vm.network "private_network", ip: "192.168.2.#{150+machine_id}"
-  #     # machine.vm.synced_folder "provision/files/ssh/authorized_keys", "/home/spark/.ssh/authorized_keys", create:true
-  #     machine.vm.provider "virtualbox" do |node|
-  #         node.name = "zookeeper#{machine_id}"
-  #         node.memory = 256
-  #         node.cpus = 1
-  #     end
-  #     if machine_id == zookeeper_node_count
-  #         machine.vm.provision :ansible do |ansible|
-  #                 ansible.playbook = "provision/zookeeper.yml"
-  #                 ansible.inventory_path = 'provision/inventory'
-  #                 # ansible.verbose = "vvvv"
-  #                 ansible.raw_ssh_args = ANSIBLE_RAW_SSH_ARGS
-  #                 ansible.limit = 'zookeeper'
-  #         end
-  #     end
-  #    end
-  # end
+  (1..zookeeper_node_count).each do |machine_id|
+    config.vm.define "zookeeper#{machine_id}" do |machine|
+      machine.vm.box = machine_box
+      machine.vm.box_url = machine_box_url
+      machine.vm.hostname = "zookeeper#{machine_id}"
+      machine.vm.network "private_network", ip: "192.168.2.#{150+machine_id}"
+      # machine.vm.synced_folder "provision/files/ssh/authorized_keys", "/home/spark/.ssh/authorized_keys", create:true
+      machine.vm.provider "virtualbox" do |node|
+          node.name = "zookeeper#{machine_id}"
+          node.memory = 256
+          node.cpus = 1
+      end
+      if machine_id == zookeeper_node_count
+          machine.vm.provision :ansible do |ansible|
+                  ansible.playbook = "provision/zookeeper.yml"
+                  ansible.inventory_path = 'provision/inventory'
+                  # ansible.verbose = "vvvv"
+                  ansible.raw_ssh_args = ANSIBLE_RAW_SSH_ARGS
+                  ansible.limit = 'zookeeper'
+          end
+      end
+     end
+  end
 
 
   ANSIBLE_RAW_SSH_ARGS_STORM = []
